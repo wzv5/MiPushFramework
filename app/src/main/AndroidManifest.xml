@@ -49,5 +49,10 @@
         <activity android:name="top.trumeet.mipushframework.help.HelpActivity"
             android:label="@string/helplib_title"
             android:theme="@style/HelpTheme.DayNight" />
+
+        <provider
+            android:name="top.trumeet.mipushframework.preferences.MiPushAppPreferenceProvider"
+            android:authorities="top.trumeet.mipushframework.preferences"
+            android:exported="true"/>
     </application>
 </manifest>
