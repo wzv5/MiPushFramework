@@ -31,26 +31,6 @@ android {
     }
     signingConfigs {
         debug {
-            def locale = null
-            def keystorePwd = null
-            def alias = null
-            def pwd = null
-            if (project.rootProject.file('local.properties').exists()) {
-                Properties properties = new Properties()
-                properties.load(project.rootProject.file('local.properties').newDataInputStream())
-                locale = properties.getProperty("KEY_LOCATE")
-                keystorePwd = properties.getProperty("KEYSTORE_PASSWORD")
-                alias = properties.getProperty("KEYSTORE_ALIAS")
-                pwd = properties.getProperty("KEY_PASSWORD")
-            }
-
-            storeFile file(locale != null ? locale : project.rootProject.file(".yuuta.jks"))
-            storePassword keystorePwd != null ?
-                    keystorePwd : System.getenv("KEYSTORE_PASS")
-            keyAlias alias != null ?
-                    alias : System.getenv("ALIAS_NAME")
-            keyPassword pwd != null ?
-                    pwd : System.getenv("ALIAS_PASS")
         }
         release {
             // 满足下面两个条件时需要此配置
@@ -89,10 +69,6 @@ dependencies {
     implementation 'moe.shizuku.preference:preference-simplemenu:2.2.3'
     // Common
     implementation project(':common')
-    // Fabric
-    implementation('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') {
-        transitive = true
-    }
     // Help
     implementation ('moe.shizuku.support:helplib:1.1.0', {
         exclude group: 'moe.shizuku.preference'
