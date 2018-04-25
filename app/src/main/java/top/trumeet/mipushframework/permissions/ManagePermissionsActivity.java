@@ -100,7 +100,7 @@ public class ManagePermissionsActivity extends AppCompatActivity implements Perm
         protected RegisteredApplication doInBackground(Void... voids) {
             mSignal = new CancellationSignal();
             return RegisteredApplicationDb.registerApplication(pkg /* Package */
-                    , false /* Auto Crate */,
+                    , false /* Auto Create */,
                     ManagePermissionsActivity.this /* Context */,
                     mSignal);
         }

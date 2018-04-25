@@ -71,11 +71,6 @@ import static top.trumeet.common.Constants.TAG_CONDOM;
 public class PushServiceMain extends XMPushService {
     private static final String TAG = "PushService";
 
-    public static final String CHANNEL_STATUS = "status";
-    public static final String CHANNEL_WARNING = "warning";
-    public static final int NOTIFICATION_ALIVE_ID = 0;
-
-
     @Override
     public void attachBaseContext (Context base) {
         Log4a.d(TAG, "attachBaseContext");
@@ -86,24 +81,6 @@ public class PushServiceMain extends XMPushService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        NotificationManager manager = (NotificationManager)
-                getSystemService(NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_STATUS,
-                    getString(R.string.notification_category_alive),
-                    NotificationManager.IMPORTANCE_MIN);
-            manager.createNotificationChannel(channel);
-        }
-        Notification notification = new NotificationCompat.Builder(this,
-                CHANNEL_STATUS)
-                .setContentTitle(getString(R.string.notification_alive))
-                .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                .setPriority(NotificationCompat.PRIORITY_MIN)
-                .setOngoing(true)
-                .setShowWhen(false)
-                .build();
-        manager.notify(NOTIFICATION_ALIVE_ID, notification);
-        startForeground(NOTIFICATION_ALIVE_ID, notification);
         return Service.START_STICKY;
     }
 
@@ -114,8 +91,6 @@ public class PushServiceMain extends XMPushService {
 
     @Override
     public void onDestroy () {
-        ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
-                .cancel(NOTIFICATION_ALIVE_ID);
         super.onDestroy();
     }
 }
