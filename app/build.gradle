@@ -12,7 +12,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "zh"
         ndk {
-            abiFilters 'armeabi', 'armeabi-v7a', 'mips', 'x86'
+            abiFilters 'armeabi-v7a'
         }
 
         buildConfigField "String", "GIT_TAG", "\"" + rootProject.ext.gitTag + "\""
