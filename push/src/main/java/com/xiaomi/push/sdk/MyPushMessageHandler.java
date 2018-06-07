@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 
 import com.crossbowffs.remotepreferences.RemotePreferenceAccessException;
 import com.xiaomi.helper.ITopActivity;
@@ -20,36 +19,29 @@ import me.pqpo.librarylog4a.Log4a;
 import top.trumeet.common.utils.PreferencesUtils;
 
 /**
- * Created by zts1993 on 2018/2/9.
+ *
+ * @author zts1993
+ * @date 2018/2/9
  */
 
 public class MyPushMessageHandler extends IntentService {
     private static final String TAG = "MyPushMessageHandler";
 
-    private static final int APP_CHECK_FRONT_MAX_RETRY = 5;
+    private static final int START_SERVICE_DELAY = 8000;
+    private static final int APP_CHECK_FRONT_MAX_RETRY = 6;
+    private static final int APP_CHECK_SLEEP_DURATION_MS = 500;
+    private static final int APP_CHECK_SLEEP_MAX_TIMEOUT_MS = APP_CHECK_FRONT_MAX_RETRY * APP_CHECK_SLEEP_DURATION_MS;
 
-//    static ITopActivity iTopActivity = null;
+    static ITopActivity iTopActivity = null;
 
     public MyPushMessageHandler() {
         super("my mipush message handler");
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        ITopActivity iTopActivity = null; //now we just check every time
-
+    protected void onHandleIntent(final Intent intent) {
         if (iTopActivity == null) {
-            SharedPreferences prefs = PreferencesUtils.getPreferences(this);
-
-            int accessMode = 0;
-            try {
-                String mode = prefs.getString(PreferencesUtils.KeyAccessMode, "0");
-                accessMode = Integer.valueOf(mode);
-            } catch (RemotePreferenceAccessException e) {
-                Log4a.e(TAG, e);
-            }
-
-            iTopActivity = TopActivityFactory.newInstance(accessMode);
+            iTopActivity = TopActivityFactory.newInstance(getAccessMode());
         }
 
         if (!iTopActivity.isEnabled(this)) {
@@ -57,73 +49,113 @@ public class MyPushMessageHandler extends IntentService {
             return;
         }
 
-        byte[] mipush_payloads = intent.getByteArrayExtra("mipush_payload");
-        if (mipush_payloads == null) {
+        byte[] payload = intent.getByteArrayExtra("mipush_payload");
+        if (payload == null) {
             Log4a.e(TAG, "mipush_payload is null");
             return;
         }
 
-        XmPushActionContainer container = new XmPushActionContainer();
-
+        final XmPushActionContainer container = new XmPushActionContainer();
         try {
-            XmPushThriftSerializeUtils.convertByteArrayToThriftObject(container, mipush_payloads);
+            XmPushThriftSerializeUtils.convertByteArrayToThriftObject(container, payload);
         } catch (Throwable var3) {
             Log4a.e(TAG, var3);
             return;
         }
 
         PushMetaInfo metaInfo = container.getMetaInfo();
+        String targetPackage = container.getPackageName();
 
-        Context context = this;
-        String package_name = container.getPackageName();
+        pullUpApp(metaInfo, targetPackage);
 
-        if (!iTopActivity.isAppForeground(this, package_name)) {
-            Log4a.i(TAG, "app is not at front , let's pull up");
-            PackageManager packageManager = context.getPackageManager();
-            Intent localIntent1 = packageManager.getLaunchIntentForPackage(package_name);
-            if (localIntent1 == null) {
-                Log4a.e(TAG, "can not get default activity for " + package_name);
-                return;
-            }
-
-            localIntent1.addCategory(String.valueOf(metaInfo.getNotifyId()));
-            localIntent1.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP); //TODO not sure about the flags here
-            startActivity(localIntent1);
-            Log4a.d(TAG, "start activity " + package_name);
-        } else {
-            Log4a.d(TAG, "app is at foreground");
-        }
-
-        for (int i = 0; i < APP_CHECK_FRONT_MAX_RETRY; i++) {
-            if (!iTopActivity.isAppForeground(this, package_name)) {
-                try {
-                    Thread.sleep(100); //TODO let's wait?
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (i == (APP_CHECK_FRONT_MAX_RETRY - 1)) {
-                    Log4a.w(TAG, "pull up app timeout" + package_name);
-                }
-            } else {
-                break;
-            }
-        }
-
-        Intent localIntent = new Intent("com.xiaomi.mipush.RECEIVE_MESSAGE");
-        localIntent.setComponent(new ComponentName(package_name, "com.xiaomi.mipush.sdk.PushMessageHandler"));
-        localIntent.putExtra("mipush_payload", mipush_payloads);
+        final Intent localIntent = new Intent("com.xiaomi.mipush.RECEIVE_MESSAGE");
+        localIntent.setComponent(new ComponentName(targetPackage, "com.xiaomi.mipush.sdk.PushMessageHandler"));
+        localIntent.putExtra("mipush_payload", payload);
         localIntent.putExtra("mipush_notified", true);
         localIntent.addCategory(String.valueOf(metaInfo.getNotifyId()));
         try {
-            Log4a.d(TAG, "send to service " + package_name);
+            Log4a.d(TAG, "send to service " + targetPackage);
+
+            startService(localIntent);
+
+            Thread.sleep(START_SERVICE_DELAY);
             startService(localIntent);
 
             int id = MyClientEventDispatcher.getNotificationId(container);
             ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(id);
+
         } catch (Exception e) {
             Log4a.e(TAG, e.getLocalizedMessage(), e);
         }
 
+    }
+
+    private long pullUpApp(PushMetaInfo metaInfo, String targetPackage) {
+        long start = System.currentTimeMillis();
+
+        try {
+
+
+            if (!iTopActivity.isAppForeground(this, targetPackage)) {
+                Log4a.d(TAG, "app is not at front , let's pull up");
+
+                Intent intent = getPackageManager().getLaunchIntentForPackage(targetPackage);
+
+                if (intent == null) {
+                    throw new RuntimeException("can not get default activity for " + targetPackage);
+                } else {
+
+                    intent.addCategory(String.valueOf(metaInfo.getNotifyId()));
+//                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                    startActivity(intent);
+                    Log4a.d(TAG, "start activity " + targetPackage);
+
+                }
+
+
+                //wait
+                for (int i = 0; i < APP_CHECK_FRONT_MAX_RETRY; i++) {
+
+                    if (!iTopActivity.isAppForeground(this, targetPackage)) {
+                        Thread.sleep(APP_CHECK_SLEEP_DURATION_MS); //TODO too bad
+                    } else {
+                        break;
+                    }
+
+                }
+
+                if ((System.currentTimeMillis() - start) >= APP_CHECK_SLEEP_MAX_TIMEOUT_MS) {
+                    Log4a.w(TAG, "pull up app timeout" + targetPackage);
+                }
+
+            } else {
+                Log4a.d(TAG, "app is at foreground" + targetPackage);
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            Log4a.e(TAG, "pullUpApp failed " + e.getLocalizedMessage(), e);
+        }
+
+
+        long end = System.currentTimeMillis();
+        return end - start;
+
+    }
+
+    private int getAccessMode() {
+        int accessMode = 0;
+        SharedPreferences prefs = PreferencesUtils.getPreferences(this);
+
+        try {
+            String mode = prefs.getString(PreferencesUtils.KeyAccessMode, "0");
+            accessMode = Integer.valueOf(mode);
+        } catch (RemotePreferenceAccessException e) {
+            Log4a.e(TAG, e);
+        }
+        return accessMode;
     }
 
 }

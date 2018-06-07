@@ -17,7 +17,16 @@ public class MiPushFramework extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        {
+        init();
+
+    }
+
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+    }
+
+    private void init() {
             //debugIcon init
             try {
                 SharedPreferences prefs = PreferencesUtils.getPreferences(this);
@@ -25,10 +34,5 @@ public class MiPushFramework extends Application {
             } catch (RemotePreferenceAccessException e) {
             }
         }
-    }
 
-    @Override
-    public void onTerminate() {
-        super.onTerminate();
-    }
 }

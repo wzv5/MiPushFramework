@@ -97,6 +97,12 @@ public final class Constants {
     public static final String SHARE_LOG_COMPONENT_NAME =
             SERVICE_APP_NAME + ".ShareLogActivity";
 
+    public static final String CLEAR_LOG_COMPONENT_NAME =
+            SERVICE_APP_NAME + ".ClearLogActivity";
+
+    public static final String KEEPLIVE_COMPONENT_NAME =
+            SERVICE_APP_NAME + ".EmptyActivity";
+
     public static final String REMOVE_DOZE_COMPONENT_NAME =
             SERVICE_APP_NAME + ".RemoveDozeActivity";
 
@@ -104,5 +110,8 @@ public final class Constants {
         public static final String BIND = "top.trumeet.mipush.permissions.BIND";
         public static final String READ_SETTINGS = "top.trumeet.mipush.permissions.READ_SETTINGS";
         public static final String WRITE_SETTINGS = "top.trumeet.mipush.permissions.WRITE_SETTINGS";
+    }
+    public static class permissions_old {
+        public static final String GET_VERSION = "top.trumeet.mipush.permissions.GET_VERSION";
     }
 }

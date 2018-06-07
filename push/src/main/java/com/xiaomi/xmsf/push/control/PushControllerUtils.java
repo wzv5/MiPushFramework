@@ -8,25 +8,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 
 import com.oasisfeng.condom.CondomContext;
-import com.taobao.android.dexposed.DexposedBridge;
-import com.taobao.android.dexposed.XC_MethodHook;
-import com.taobao.android.dexposed.XC_MethodReplacement;
 import com.xiaomi.mipush.sdk.MiPushClient;
-import com.xiaomi.push.service.GeoFenceUtils;
 import com.xiaomi.push.service.PushServiceConstants;
 import com.xiaomi.push.service.PushServiceMain;
-import com.xiaomi.xmsf.push.hooks.PushSdkHooks;
 import com.xiaomi.xmsf.push.service.receivers.BootReceiver;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import me.pqpo.librarylog4a.Log4a;
 import top.trumeet.common.Constants;
@@ -100,9 +90,22 @@ public class PushControllerUtils {
      * @param context context param
      */
     public static void setServiceEnable(boolean enable, Context context) {
-        if (enable && isAppMainProc(context)) {
+        if (enable) {
             Log4a.d(TAG, "Starting...");
-            MiPushClient.registerPush(wrapContext(context), APP_ID, APP_KEY);
+
+            if (isAppMainProc(context)) {
+                MiPushClient.registerPush(wrapContext(context), APP_ID, APP_KEY);
+            }
+
+            try {
+                Intent serviceIntent = new Intent(context, PushServiceMain.class);
+                serviceIntent.putExtra(PushServiceConstants.EXTRA_TIME_STAMP, System.currentTimeMillis());
+                serviceIntent.setAction(PushServiceConstants.ACTION_TIMER);
+                context.startService(serviceIntent);
+            } catch (Throwable e) {
+                Log4a.e(TAG, e);
+            }
+
         } else {
             Log4a.d(TAG, "Stopping...");
             MiPushClient.unregisterPush(wrapContext(context));

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="top.trumeet.mipush"  >
 
+    <uses-permission android:name="top.trumeet.mipush.permissions.GET_VERSION" />
+
     <uses-permission android:name="top.trumeet.mipush.permissions.READ_SETTINGS" />
     <uses-permission android:name="top.trumeet.mipush.permissions.WRITE_SETTINGS" />
     <uses-permission android:name="top.trumeet.mipush.permissions.BIND" />
@@ -10,6 +12,17 @@
         android:label="@string/app_name"
         android:icon="@mipmap/ic_app"
         android:name="top.trumeet.mipushframework.MiPushFramework">
+
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="小米推送框架增强模块" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="53" />
+
 
         <activity android:name="top.trumeet.mipushframework.wizard.WelcomeActivity"
             android:theme="@style/AppTheme.Wizard"
