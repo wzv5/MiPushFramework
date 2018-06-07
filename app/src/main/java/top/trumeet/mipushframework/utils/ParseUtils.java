@@ -38,23 +38,16 @@ public class ParseUtils {
         calendarServer.setTime(fromServer);
         calendarCurrent.setTime(current);
 
-        int zoneOffset = calendarServer.get(java.util.Calendar.ZONE_OFFSET);
-        int dstOffset = calendarServer.get(java.util.Calendar.DST_OFFSET);
-
-        calendarServer.add(java.util.Calendar.MILLISECOND, (zoneOffset + dstOffset));
-        calendarCurrent.add(java.util.Calendar.MILLISECOND, (zoneOffset + dstOffset));
-
-
         long time1 = calendarCurrent.getTimeInMillis();
         long time2 = calendarServer.getTimeInMillis();
 
         // Calculate difference in milliseconds
         long diff = time1 - time2;
-        long sec = diff / 1000;
-        long min = diff / (60 * 1000);
-        long hour = diff / (60 * 60 * 1000);
         long day = diff / (24 * 60 * 60 * 1000);
-
+        diff -= day * 24 * 60 * 60 * 1000;
+        long hour = diff / (60 * 60 * 1000);
+        diff -= hour * 60 * 60 * 1000;
+        long min = diff / (60 * 1000);
 
         if (day < 1) {
             if (hour < 1) {
@@ -68,28 +61,23 @@ public class ParseUtils {
                                     .getQuantityString(R.plurals.date_minutes,
                                             (int) min));
                 }
-            } else if (hour < 24) {
+            } else {
                 return context.getString(R.string.date_format_normal,
                         String.valueOf(hour),
                         context.getResources()
                                 .getQuantityString(R.plurals.date_hours,
                                         (int) hour));
-            } else {
-                return parseDate(fromServer);
-
             }
         } else if (day < 30) {
             return context.getString(R.string.date_format_normal,
                     String.valueOf(day),
                     context.getResources()
-                            .getQuantityString(R.plurals.date_hours,
+                            .getQuantityString(R.plurals.date_days,
                                     (int) day));
         } else {
             return context.getString(R.string.date_format_long,
                     parseDate(fromServer));
         }
-
-
     }
 
     private static String parseDate(Date date) {
@@ -97,6 +85,5 @@ public class ParseUtils {
         DateFormat formatter = DateFormat.getDateTimeInstance();
         formatter.setTimeZone(tz);
         return formatter.format(date);
-
     }
 }
