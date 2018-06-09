@@ -54,7 +54,7 @@ public abstract class MainActivity extends AppCompatActivity implements Permissi
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         checkAndConnect();
-        checkAndShowPlatformNotice();
+        //checkAndShowPlatformNotice();
     }
 
     @UiThread
