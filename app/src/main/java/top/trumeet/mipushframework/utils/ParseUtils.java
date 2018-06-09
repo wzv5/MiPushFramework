@@ -32,14 +32,8 @@ public class ParseUtils {
 
     public static String getFriendlyDateString(Date fromServer, Date current,
                                                Context context) {
-
-        Calendar calendarCurrent = Calendar.getInstance();
-        Calendar calendarServer = Calendar.getInstance();
-        calendarServer.setTime(fromServer);
-        calendarCurrent.setTime(current);
-
-        long time1 = calendarCurrent.getTimeInMillis();
-        long time2 = calendarServer.getTimeInMillis();
+        long time1 = current.getTime();
+        long time2 = fromServer.getTime();
 
         // Calculate difference in milliseconds
         long diff = time1 - time2;
